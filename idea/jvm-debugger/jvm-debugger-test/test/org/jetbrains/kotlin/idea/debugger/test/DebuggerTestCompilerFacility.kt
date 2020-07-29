@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.PsiManager
+import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.cli.common.output.writeAllTo
 import org.jetbrains.kotlin.cli.jvm.compiler.findMainClass
@@ -165,7 +166,7 @@ class DebuggerTestCompilerFacility(files: List<TestFile>, private val jvmTarget:
 
         val state = GenerationState.Builder(project, ClassBuilderFactories.BINARIES, moduleDescriptor, bindingContext, files, configuration)
             .generateDeclaredClassFilter(GenerationState.GenerateClassFilter.GENERATE_ALL)
-            .codegenFactory(DefaultCodegenFactory)
+            .codegenFactory(JvmIrCodegenFactory())
             .build()
 
         KotlinCodegenFacade.compileCorrectFiles(state)

@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi2ir.PsiSourceManager
 
-class JvmIrCodegenFactory(private val phaseConfig: PhaseConfig) : CodegenFactory {
+class JvmIrCodegenFactory(private val phaseConfig: PhaseConfig = PhaseConfig(jvmPhases)) : CodegenFactory {
 
     override fun generateModule(state: GenerationState, files: Collection<KtFile>) {
         JvmBackendFacade.doGenerateFiles(files, state, phaseConfig)

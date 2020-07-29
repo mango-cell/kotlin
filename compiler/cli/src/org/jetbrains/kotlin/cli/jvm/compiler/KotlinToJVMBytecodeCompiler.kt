@@ -626,9 +626,8 @@ object KotlinToJVMBytecodeCompiler {
             configuration
         )
             .codegenFactory(
-                if (isIR) JvmIrCodegenFactory(
-                    configuration.get(CLIConfigurationKeys.PHASE_CONFIG) ?: PhaseConfig(jvmPhases)
-                ) else DefaultCodegenFactory
+                if (anyKts) DefaultCodegenFactory
+                else JvmIrCodegenFactory(configuration.get(CLIConfigurationKeys.PHASE_CONFIG) ?: PhaseConfig(jvmPhases))
             )
             .withModule(module)
             .onIndependentPartCompilationEnd(createOutputFilesFlushingCallbackIfPossible(configuration))
