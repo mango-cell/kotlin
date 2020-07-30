@@ -361,7 +361,7 @@ class NewMultiplatformIT : BaseGradleIT() {
                 } else {
                     arrayOf(
                         ":compileKotlinNodeJs",
-                        ":compileKotlinMetadata"
+                        ":compileCommonMainKotlinMetadata"
                     )
                 }
                 assertTasksExecuted(*compileTaskNames)
@@ -1406,7 +1406,7 @@ class NewMultiplatformIT : BaseGradleIT() {
                 artifact to sourcesDirs
             }
 
-            assertEquals(setOf("commonMain"), sourceJarSourceRoots["metadata"])
+            assertEquals(setOf("commonMain", "jvm6Main", "linux64Main", "macos64Main", "mingw64Main", "mingw86Main", "nodeJsMain", "wasm32Main"), sourceJarSourceRoots["metadata"])
             assertEquals(setOf("commonMain", "jvm6Main"), sourceJarSourceRoots["jvm6"])
             assertEquals(setOf("commonMain", "nodeJsMain"), sourceJarSourceRoots["nodejs"])
             assertEquals(setOf("commonMain", "wasm32Main"), sourceJarSourceRoots["wasm32"])

@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.gradle.plugin.mpp
 import org.gradle.api.Project
 import org.gradle.api.attributes.*
 import org.gradle.api.attributes.Usage.*
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.*
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
@@ -23,9 +24,10 @@ object KotlinUsages {
 
     private val jvmPlatformTypes: Set<KotlinPlatformType> = setOf(jvm, androidJvm)
 
-    internal fun consumerApiUsage(target: KotlinTarget) = target.project.usageByName(
+    internal fun consumerApiUsage(target: KotlinTarget, compilation: KotlinCompilation<*>? = null) = target.project.usageByName(
         when (target.platformType) {
-            common -> if (target.project.isKotlinGranularMetadataEnabled) KOTLIN_METADATA else KOTLIN_API
+            common -> if (target.project.isKotlinGranularMetadataEnabled && compilation?.name != KotlinCompilation.MAIN_COMPILATION_NAME)
+                KOTLIN_METADATA else KOTLIN_API
             in jvmPlatformTypes -> JAVA_API
             else -> KOTLIN_API
         }
