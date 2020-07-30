@@ -28,10 +28,7 @@ import org.jetbrains.kotlin.asJava.classes.*
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.JvmCodegenUtil
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
-import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.load.java.components.JavaDeprecationSettings
 import org.jetbrains.kotlin.name.Name
@@ -54,14 +51,15 @@ import org.jetbrains.kotlin.types.KotlinType
 
  * To mitigate this, CliLightClassGenerationSupport hold a trace that is shared between the analyzer and JetLightClasses
  */
-class CliLightClassGenerationSupport(private val traceHolder: CliTraceHolder) : LightClassGenerationSupport() {
+class CliLightClassGenerationSupport(
+    private val traceHolder: CliTraceHolder,
+    private val languageVersionSettings: () -> LanguageVersionSettings
+) : LightClassGenerationSupport() {
 
     private val ultraLightSupport = object : KtUltraLightSupport {
 
-        //TODO: languageVersionSettings is always default
         override val languageVersionSettings: LanguageVersionSettings
-            get() = getContext().languageVersionSettings
-                ?: LanguageVersionSettingsImpl.DEFAULT
+            get() = this@CliLightClassGenerationSupport.languageVersionSettings()
 
         override val isReleasedCoroutine
             get() = languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines)
@@ -116,7 +114,7 @@ class CliLightClassGenerationSupport(private val traceHolder: CliTraceHolder) : 
         return LightClassDataHolderImpl(stub, diagnostics)
     }
 
-    private fun getContext(): LightClassConstructionContext = LightClassConstructionContext(traceHolder.bindingContext, traceHolder.module)
+    private fun getContext(): LightClassConstructionContext = LightClassConstructionContext(traceHolder.bindingContext, traceHolder.module, languageVersionSettings())
 
     override fun resolveToDescriptor(declaration: KtDeclaration): DeclarationDescriptor? {
         return traceHolder.bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, declaration)
