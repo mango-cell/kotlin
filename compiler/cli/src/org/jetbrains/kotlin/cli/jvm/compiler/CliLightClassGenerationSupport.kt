@@ -33,9 +33,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.components.JavaDeprecationSettings
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -43,7 +41,6 @@ import org.jetbrains.kotlin.resolve.deprecation.CoroutineCompatibilitySupport
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator as ResolveEvaluator
 
 /**
  * This class solves the problem of interdependency between analyzing Kotlin code and generating JetLightClasses
@@ -62,7 +59,7 @@ class CliLightClassGenerationSupport(private val traceHolder: CliTraceHolder) : 
     private val ultraLightSupport = object : KtUltraLightSupport {
 
         //TODO: languageVersionSettings is always default
-        private val languageVersionSettings: LanguageVersionSettings
+        override val languageVersionSettings: LanguageVersionSettings
             get() = getContext().languageVersionSettings
                 ?: LanguageVersionSettingsImpl.DEFAULT
 
@@ -70,9 +67,6 @@ class CliLightClassGenerationSupport(private val traceHolder: CliTraceHolder) : 
             get() = languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines)
 
         override fun possiblyHasAlias(file: KtFile, shortName: Name): Boolean = true
-
-        override fun getConstantEvaluator(expression: KtExpression): org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator =
-            ResolveEvaluator(moduleDescriptor, languageVersionSettings, expression.project)
 
         override val moduleDescriptor get() = traceHolder.module
 
@@ -98,51 +92,6 @@ class CliLightClassGenerationSupport(private val traceHolder: CliTraceHolder) : 
             )
         }
     }
-
-    override fun createUltraLightClassForFacade(
-        manager: PsiManager,
-        facadeClassFqName: FqName,
-        lightClassDataCache: CachedValue<LightClassDataHolder.ForFacade>,
-        files: Collection<KtFile>
-    ): KtUltraLightClassForFacade? {
-
-        if (files.any { it.isScript() }) return null
-
-        val filesToSupports: List<Pair<KtFile, KtUltraLightSupport>> = files.map {
-            it to UltraLightSupportViaService(it)
-        }
-
-        return KtUltraLightClassForFacade(
-            manager,
-            facadeClassFqName,
-            lightClassDataCache,
-            files,
-            filesToSupports
-        )
-    }
-
-    override fun createUltraLightClass(element: KtClassOrObject): KtUltraLightClass? {
-        if (element.shouldNotBeVisibleAsLightClass()) {
-            return null
-        }
-
-        return UltraLightSupportViaService(element).let { support ->
-            when {
-                element is KtObjectDeclaration && element.isObjectLiteral() ->
-                    KtUltraLightClassForAnonymousDeclaration(element, support)
-                element.safeIsLocal() ->
-                    KtUltraLightClassForLocalDeclaration(element, support)
-
-                (element.hasModifier(KtTokens.INLINE_KEYWORD)) ->
-                    KtUltraLightInlineClass(element, support)
-
-                else -> KtUltraLightClass(element, support)
-            }
-        }
-    }
-
-    override fun createUltraLightClassForScript(script: KtScript): KtUltraLightClassForScript? =
-        KtUltraLightClassForScript(script, support = UltraLightSupportViaService(script))
 
     override fun getUltraLightClassSupport(element: KtElement): KtUltraLightSupport = ultraLightSupport
 
@@ -178,6 +127,4 @@ class CliLightClassGenerationSupport(private val traceHolder: CliTraceHolder) : 
     override fun analyzeAnnotation(element: KtAnnotationEntry) = traceHolder.bindingContext.get(BindingContext.ANNOTATION, element)
 
     override fun analyzeWithContent(element: KtClassOrObject) = traceHolder.bindingContext
-
-
 }
